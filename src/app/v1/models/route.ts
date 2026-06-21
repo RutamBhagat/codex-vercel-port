@@ -1,5 +1,5 @@
 import { corsPreflight, jsonCors } from "@/server/cors";
-import { supportedModels } from "@/server/models";
+import { apiModelIds } from "@/server/models";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ export function OPTIONS(request: Request) {
 export function GET() {
 	return jsonCors({
 		object: "list",
-		data: supportedModels.map((id) => ({
+		data: apiModelIds.map((id) => ({
 			id,
 			object: "model",
 			owned_by: "openai-codex",

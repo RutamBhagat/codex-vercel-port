@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { type ReasoningEffort, supportedModels } from "@/server/models";
+import { apiModelIds, type ReasoningEffort } from "@/server/models";
 
 const messageSchema = z.object({
 	role: z.enum(["system", "developer", "user", "assistant"]),
@@ -7,7 +7,7 @@ const messageSchema = z.object({
 });
 
 export const chatRequestSchema = z.object({
-	model: z.enum(supportedModels),
+	model: z.enum(apiModelIds),
 	stream: z.boolean().optional(),
 	reasoning: z
 		.object({

@@ -3,7 +3,7 @@ import { jsonChat, streamChat } from "@/server/chat-response";
 import { buildCodexBody, chatRequestSchema } from "@/server/chat-shapes";
 import { fetchCodex } from "@/server/codex-upstream";
 import { corsPreflight, jsonCors } from "@/server/cors";
-import { defaultEffort, isEffortAllowed } from "@/server/models";
+import { defaultEffort, isEffortAllowed, resolveModel } from "@/server/models";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,9 +21,13 @@ export async function POST(request: Request) {
 		}
 
 		const body = chatRequestSchema.parse(await request.json());
+		const selected = resolveModel(body.model);
 		const effort =
-			body.reasoning?.effort ?? env.REASONING_EFFORT ?? defaultEffort();
-		if (!isEffortAllowed(body.model, effort)) {
+			body.reasoning?.effort ??
+			selected.effort ??
+			env.REASONING_EFFORT ??
+			defaultEffort();
+		if (!isEffortAllowed(selected.model, effort)) {
 			return jsonError(
 				`${body.model} does not support reasoning.effort=${effort}`,
 				400,
@@ -32,14 +36,14 @@ export async function POST(request: Request) {
 
 		const created = Math.floor(Date.now() / 1000);
 		const upstream = await fetchCodex(
-			buildCodexBody(body, body.model, {
+			buildCodexBody(body, selected.model, {
 				effort,
 				summary: body.reasoning?.summary ?? env.REASONING_SUMMARY,
 			}),
 		);
 		return body.stream
-			? streamChat(upstream, body.model, created)
-			: jsonChat(upstream, body.model, created);
+			? streamChat(upstream, selected.model, created)
+			: jsonChat(upstream, selected.model, created);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unexpected error";
 		return jsonError(message, 400);

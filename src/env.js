@@ -8,6 +8,19 @@ export const env = createEnv({
 	 */
 	server: {
 		NODE_ENV: z.enum(["development", "test", "production"]),
+		OPENAI_API_KEY: z.string().optional(),
+		OPENAI_CODEX_AUTH: z.string().min(1),
+		REASONING_EFFORT: z
+			.enum(["minimal", "low", "medium", "high", "xhigh", "none"])
+			.optional(),
+		REASONING_SUMMARY: z
+			.enum(["auto", "concise", "detailed", "none"])
+			.default("auto"),
+		CHATGPT_RESPONSES_URL: z
+			.string()
+			.url()
+			.default("https://chatgpt.com/backend-api/codex/responses"),
+		CHATGPT_LOCAL_CLIENT_ID: z.string().default("app_EMoamEEZ73f0CkXaXp7hrann"),
 	},
 
 	/**
@@ -25,6 +38,12 @@ export const env = createEnv({
 	 */
 	runtimeEnv: {
 		NODE_ENV: process.env.NODE_ENV,
+		OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+		OPENAI_CODEX_AUTH: process.env.OPENAI_CODEX_AUTH,
+		REASONING_EFFORT: process.env.REASONING_EFFORT,
+		REASONING_SUMMARY: process.env.REASONING_SUMMARY,
+		CHATGPT_RESPONSES_URL: process.env.CHATGPT_RESPONSES_URL,
+		CHATGPT_LOCAL_CLIENT_ID: process.env.CHATGPT_LOCAL_CLIENT_ID,
 		// NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
 	},
 	/**

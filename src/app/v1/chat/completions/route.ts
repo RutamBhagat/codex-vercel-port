@@ -2,11 +2,16 @@ import { env } from "@/env";
 import { jsonChat, streamChat } from "@/server/chat-response";
 import { buildCodexBody, chatRequestSchema } from "@/server/chat-shapes";
 import { fetchCodex } from "@/server/codex-upstream";
+import { corsPreflight, jsonCors } from "@/server/cors";
 import { defaultEffort, isEffortAllowed } from "@/server/models";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
+
+export function OPTIONS(request: Request) {
+	return corsPreflight(request);
+}
 
 export async function POST(request: Request) {
 	try {
@@ -54,5 +59,5 @@ function validateProxyAuth(request: Request) {
 }
 
 function jsonError(message: string, status: number) {
-	return Response.json({ error: { message } }, { status });
+	return jsonCors({ error: { message } }, { status });
 }

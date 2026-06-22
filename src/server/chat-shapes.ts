@@ -64,6 +64,18 @@ export function buildCodexBody(
 				},
 			],
 		}));
+	if (
+		body.response_format?.type === "json_object" &&
+		!input.some((message) =>
+			message.content.some((content) => /\bjson\b/i.test(content.text)),
+		)
+	) {
+		input.push({
+			type: "message",
+			role: "user",
+			content: [{ type: "input_text", text: "Respond in JSON." }],
+		});
+	}
 
 	return {
 		model,

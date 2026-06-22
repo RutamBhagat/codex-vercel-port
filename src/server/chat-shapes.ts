@@ -5,10 +5,22 @@ const messageSchema = z.object({
 	role: z.enum(["system", "developer", "user", "assistant"]),
 	content: z.string(),
 });
-
+const responseFormatSchema = z.union([
+	z.object({ type: z.literal("json_object") }),
+	z.object({
+		type: z.literal("json_schema"),
+		json_schema: z.object({
+			name: z.string().min(1),
+			description: z.string().optional(),
+			schema: z.record(z.unknown()),
+			strict: z.boolean().optional(),
+		}),
+	}),
+]);
 export const chatRequestSchema = z.object({
 	model: z.enum(apiModelIds),
 	stream: z.boolean().optional(),
+	response_format: responseFormatSchema.optional(),
 	reasoning: z
 		.object({
 			effort: z
@@ -19,9 +31,7 @@ export const chatRequestSchema = z.object({
 		.optional(),
 	messages: z.array(messageSchema).min(1),
 });
-
 type ChatRequest = z.infer<typeof chatRequestSchema>;
-
 type Reasoning = {
 	effort: ReasoningEffort;
 	summary: "auto" | "concise" | "detailed" | "none";
@@ -65,9 +75,26 @@ export function buildCodexBody(
 		store: false,
 		stream: true,
 		include: reasoning.effort === "none" ? [] : ["reasoning.encrypted_content"],
+		...(body.response_format && {
+			text: { format: toResponsesFormat(body.response_format) },
+		}),
 		reasoning:
 			reasoning.summary === "none"
 				? { effort: reasoning.effort }
 				: { effort: reasoning.effort, summary: reasoning.summary },
+	};
+}
+
+function toResponsesFormat(format: NonNullable<ChatRequest["response_format"]>) {
+	if (format.type === "json_object") {
+		return { type: "json_object" };
+	}
+	const jsonSchema = format.json_schema;
+	return {
+		type: "json_schema",
+		name: jsonSchema.name,
+		...(jsonSchema.description && { description: jsonSchema.description }),
+		schema: jsonSchema.schema,
+		...(jsonSchema.strict !== undefined && { strict: jsonSchema.strict }),
 	};
 }

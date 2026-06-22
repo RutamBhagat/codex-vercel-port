@@ -5,16 +5,16 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export function OPTIONS(request: Request) {
-	return corsPreflight(request);
+  return corsPreflight(request);
 }
 
 export function GET() {
-	return jsonCors({
-		object: "list",
-		data: apiModelIds.map((id) => ({
-			id,
-			object: "model",
-			owned_by: "openai-codex",
-		})),
-	});
+  return jsonCors({
+    object: "list",
+    data: apiModelIds.map((id) => ({
+      id,
+      object: "model",
+      owned_by: "openai-codex",
+    })),
+  });
 }

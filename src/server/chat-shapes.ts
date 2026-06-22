@@ -1,9 +1,23 @@
 import { z } from "zod";
 import { apiModelIds, type ReasoningEffort } from "@/server/models";
 
+const textPartSchema = z.object({ type: z.literal("text"), text: z.string() });
+const filePartSchema = z.object({
+	type: z.literal("file"),
+	file: z.object({
+		filename: z.string().optional(),
+		file_data: z.string().optional(),
+		file_id: z.string().optional(),
+		file_url: z.string().optional(),
+	}),
+});
+const contentSchema = z.union([
+	z.string(),
+	z.array(z.union([textPartSchema, filePartSchema])).min(1),
+]);
 const messageSchema = z.object({
 	role: z.enum(["system", "developer", "user", "assistant"]),
-	content: z.string(),
+	content: contentSchema,
 });
 const responseFormatSchema = z.union([
 	z.object({ type: z.literal("json_object") }),
@@ -47,27 +61,28 @@ export function buildCodexBody(
 			.filter(
 				(message) => message.role === "system" || message.role === "developer",
 			)
-			.map((message) => message.content)
+			.map((message) => toText(message.content))
 			.join("\n\n") || "_";
 
-	const input = body.messages
-		.filter(
-			(message) => message.role === "user" || message.role === "assistant",
-		)
-		.map((message) => ({
+	const input = body.messages.flatMap((message) => {
+		if (message.role !== "user" && message.role !== "assistant") {
+			return [];
+		}
+		return {
 			type: "message",
 			role: message.role,
-			content: [
-				{
-					type: message.role === "assistant" ? "output_text" : "input_text",
-					text: message.content,
-				},
-			],
-		}));
+			content: toResponsesContent(message.role, message.content),
+		};
+	});
 	if (
 		body.response_format?.type === "json_object" &&
 		!input.some((message) =>
-			message.content.some((content) => /\bjson\b/i.test(content.text)),
+			message.content.some(
+				(content) =>
+					"text" in content &&
+					typeof content.text === "string" &&
+					/\bjson\b/i.test(content.text),
+			),
 		)
 	) {
 		input.push({
@@ -97,7 +112,46 @@ export function buildCodexBody(
 	};
 }
 
-function toResponsesFormat(format: NonNullable<ChatRequest["response_format"]>) {
+function toText(content: z.infer<typeof contentSchema>) {
+	return typeof content === "string"
+		? content
+		: content
+				.filter((part) => part.type === "text")
+				.map((part) => part.text)
+				.join("\n\n");
+}
+
+function toResponsesContent(
+	role: "user" | "assistant",
+	content: z.infer<typeof contentSchema>,
+) {
+	if (typeof content === "string") {
+		return [
+			{
+				type: role === "assistant" ? "output_text" : "input_text",
+				text: content,
+			},
+		];
+	}
+	return content.map((part) =>
+		part.type === "text"
+			? {
+					type: role === "assistant" ? "output_text" : "input_text",
+					text: part.text,
+				}
+			: {
+					type: "input_file",
+					...(part.file.filename && { filename: part.file.filename }),
+					...(part.file.file_data && { file_data: part.file.file_data }),
+					...(part.file.file_id && { file_id: part.file.file_id }),
+					...(part.file.file_url && { file_url: part.file.file_url }),
+				},
+	);
+}
+
+function toResponsesFormat(
+	format: NonNullable<ChatRequest["response_format"]>,
+) {
 	if (format.type === "json_object") {
 		return { type: "json_object" };
 	}

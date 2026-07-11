@@ -38,7 +38,7 @@ export const chatRequestSchema = z.object({
   reasoning: z
     .object({
       effort: z
-        .enum(["minimal", "low", "medium", "high", "xhigh", "none"])
+        .enum(["minimal", "low", "medium", "high", "xhigh", "max", "none"])
         .optional(),
       summary: z.enum(["auto", "concise", "detailed", "none"]).optional(),
     })

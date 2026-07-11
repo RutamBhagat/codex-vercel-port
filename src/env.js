@@ -11,7 +11,7 @@ export const env = createEnv({
     OPENAI_API_KEY: z.string().optional(),
     OPENAI_CODEX_AUTH: z.string().min(1),
     REASONING_EFFORT: z
-      .enum(["minimal", "low", "medium", "high", "xhigh", "none"])
+      .enum(["minimal", "low", "medium", "high", "xhigh", "max", "none"])
       .optional(),
     REASONING_SUMMARY: z
       .enum(["auto", "concise", "detailed", "none"])

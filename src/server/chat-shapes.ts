@@ -2,6 +2,13 @@ import { z } from "zod";
 import { apiModelIds, type ReasoningEffort } from "@/server/models";
 
 const textPartSchema = z.object({ type: z.literal("text"), text: z.string() });
+const imagePartSchema = z.object({
+  type: z.literal("image_url"),
+  image_url: z.object({
+    url: z.string().min(1),
+    detail: z.enum(["auto", "low", "high"]).optional(),
+  }),
+});
 const filePartSchema = z.object({
   type: z.literal("file"),
   file: z.object({
@@ -13,7 +20,7 @@ const filePartSchema = z.object({
 });
 const contentSchema = z.union([
   z.string(),
-  z.array(z.union([textPartSchema, filePartSchema])).min(1),
+  z.array(z.union([textPartSchema, imagePartSchema, filePartSchema])).min(1),
 ]);
 const messageSchema = z.object({
   role: z.enum(["system", "developer", "user", "assistant"]),
@@ -133,20 +140,28 @@ function toResponsesContent(
       },
     ];
   }
-  return content.map((part) =>
-    part.type === "text"
-      ? {
-          type: role === "assistant" ? "output_text" : "input_text",
-          text: part.text,
-        }
-      : {
-          type: "input_file",
-          ...(part.file.filename && { filename: part.file.filename }),
-          ...(part.file.file_data && { file_data: part.file.file_data }),
-          ...(part.file.file_id && { file_id: part.file.file_id }),
-          ...(part.file.file_url && { file_url: part.file.file_url }),
-        },
-  );
+  return content.map((part) => {
+    if (part.type === "text") {
+      return {
+        type: role === "assistant" ? "output_text" : "input_text",
+        text: part.text,
+      };
+    }
+    if (part.type === "image_url") {
+      return {
+        type: "input_image",
+        image_url: part.image_url.url,
+        ...(part.image_url.detail && { detail: part.image_url.detail }),
+      };
+    }
+    return {
+      type: "input_file",
+      ...(part.file.filename && { filename: part.file.filename }),
+      ...(part.file.file_data && { file_data: part.file.file_data }),
+      ...(part.file.file_id && { file_id: part.file.file_id }),
+      ...(part.file.file_url && { file_url: part.file.file_url }),
+    };
+  });
 }
 
 function toResponsesFormat(

@@ -1,29 +1,52 @@
-# Create T3 App
+# Codex Vercel Port
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+An OpenAI-compatible Chat Completions proxy backed by the ChatGPT Codex Responses API.
 
-## What's next? How do I make an app with this?
+## Supported endpoints
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+- `GET /v1/models`
+- `POST /v1/chat/completions`
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+Chat completions support normal text messages, JSON/JSON Schema responses, streaming, inline files, and
+vision inputs. Standard Chat Completions image parts are translated to Codex Responses `input_image` parts:
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+```json
+{
+  "model": "gpt-5.6-sol-medium",
+  "messages": [
+    {
+      "role": "user",
+      "content": [
+        { "type": "text", "text": "Describe this image" },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "data:image/png;base64,...",
+            "detail": "high"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
 
-## Learn More
+The image URL may be an HTTP(S) URL or a base64 data URL. Multiple image parts may be included in one
+message, which allows clients to send an original image together with derived layers or contact sheets.
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+## Environment
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+```bash
+OPENAI_CODEX_AUTH='{"tokens":{...}}'
+OPENAI_API_KEY=optional-client-facing-proxy-key
+```
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+Optional server settings include `REASONING_EFFORT`, `REASONING_SUMMARY`, `CHATGPT_RESPONSES_URL`, and
+`CHATGPT_LOCAL_CLIENT_ID`; their defaults and validation live in `src/env.js`.
 
-## How do I deploy this?
+## Development
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+```bash
+bun install
+bun run dev
+```

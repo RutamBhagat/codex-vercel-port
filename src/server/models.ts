@@ -1,8 +1,4 @@
-export const supportedModels = [
-  "gpt-5.6-sol",
-  "gpt-5.5",
-  "gpt-5.4-mini",
-] as const;
+export const supportedModels = ["gpt-5.6-sol", "gpt-5.6-luna"] as const;
 export type SupportedModel = (typeof supportedModels)[number];
 export type ReasoningEffort =
   | "minimal"
@@ -20,17 +16,11 @@ export const modelPresets = [
     model: "gpt-5.6-sol",
     effort: "medium",
   },
-  { id: "gpt-5.6-sol-high", model: "gpt-5.6-sol", effort: "high" },
-  { id: "gpt-5.6-sol-xhigh", model: "gpt-5.6-sol", effort: "xhigh" },
-  { id: "gpt-5.6-sol-max", model: "gpt-5.6-sol", effort: "max" },
-  { id: "gpt-5.5-low", model: "gpt-5.5", effort: "low" },
-  { id: "gpt-5.5-medium", model: "gpt-5.5", effort: "medium" },
-  { id: "gpt-5.5-high", model: "gpt-5.5", effort: "high" },
-  { id: "gpt-5.5-xhigh", model: "gpt-5.5", effort: "xhigh" },
-  { id: "gpt-5.4-mini-low", model: "gpt-5.4-mini", effort: "low" },
-  { id: "gpt-5.4-mini-medium", model: "gpt-5.4-mini", effort: "medium" },
-  { id: "gpt-5.4-mini-high", model: "gpt-5.4-mini", effort: "high" },
-  { id: "gpt-5.4-mini-xhigh", model: "gpt-5.4-mini", effort: "xhigh" },
+  { id: "gpt-5.6-luna-low", model: "gpt-5.6-luna", effort: "low" },
+  { id: "gpt-5.6-luna-medium", model: "gpt-5.6-luna", effort: "medium" },
+  { id: "gpt-5.6-luna-high", model: "gpt-5.6-luna", effort: "high" },
+  { id: "gpt-5.6-luna-xhigh", model: "gpt-5.6-luna", effort: "xhigh" },
+  { id: "gpt-5.6-luna-max", model: "gpt-5.6-luna", effort: "max" },
 ] as const;
 export const apiModelIds = [
   ...supportedModels,
@@ -43,8 +33,7 @@ export type ApiModelId = (typeof apiModelIds)[number];
 
 const effortByModel: Record<SupportedModel, readonly ReasoningEffort[]> = {
   "gpt-5.6-sol": ["none", "low", "medium", "high", "xhigh", "max"],
-  "gpt-5.5": ["none", "low", "medium", "high", "xhigh"],
-  "gpt-5.4-mini": ["none", "low", "medium", "high", "xhigh"],
+  "gpt-5.6-luna": ["low", "medium", "high", "xhigh", "max"],
 };
 
 export function defaultEffort(): ReasoningEffort {
